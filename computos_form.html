@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cómputos Métricos - Alcaldía de Brión</title>
+<style>
+  :root{--azul:#1A365D;--azul2:#2c5282;--fondo:#f4f6f9;--borde:#d7dee6;}
+  *{box-sizing:border-box}
+  body{font-family:Arial,Helvetica,sans-serif;background:var(--fondo);margin:0;color:#1f2937}
+  header{background:var(--azul);color:#fff;padding:18px 20px;text-align:center}
+  header h1{margin:0;font-size:20px}
+  header p{margin:4px 0 0;font-size:13px;opacity:.85}
+  form{max-width:920px;margin:18px auto;padding:0 14px 60px}
+  fieldset{background:#fff;border:1px solid var(--borde);border-radius:10px;margin-bottom:16px;padding:0}
+  legend{display:none}
+  .sec-head{background:var(--azul);color:#fff;padding:10px 16px;border-radius:10px 10px 0 0;font-weight:bold;font-size:15px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+  .sec-body{padding:14px 16px;display:none}
+  .sec-body.open{display:block}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:10px}
+  label{font-size:12.5px;color:#4b5563;display:block;margin-bottom:3px}
+  input,select{width:100%;padding:7px 8px;border:1px solid var(--borde);border-radius:6px;font-size:14px}
+  table{width:100%;border-collapse:collapse;margin:8px 0;font-size:13px}
+  th,td{border:1px solid var(--borde);padding:5px}
+  th{background:#eef2f7;color:var(--azul)}
+  td input{border:none;padding:4px;width:100%}
+  .btn{cursor:pointer;border:none;border-radius:6px;padding:8px 14px;font-size:13.5px;font-weight:bold}
+  .btn-add{background:#e2e8f0;color:var(--azul2)}
+  .btn-del{background:#fde8e8;color:#b91c1c;padding:3px 8px}
+  .btn-final{background:var(--azul);color:#fff;padding:14px;font-size:16px;width:100%;border-radius:8px;margin-top:10px}
+  .nota{font-size:12px;color:#6b7280;margin:4px 0 10px}
+  .row-actions{margin-top:6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>CÓMPUTOS MÉTRICOS</h1>
+  <p>Alcaldía del Municipio Bolivariano de Brión</p>
+</header>
+
+<form method="POST" action="/generar" id="frm">
+
+  <fieldset>
+    <div class="sec-head" onclick="toggle(this)">Datos Generales <span>▾</span></div>
+    <div class="sec-body open">
+      <div class="grid">
+        <div><label>Obra / Proyecto</label><input name="obra"></div>
+        <div><label>Ubicación</label><input name="ubicacion"></div>
+        <div><label>Parroquia</label>
+          <select name="parroquia"><option value="">-</option><option>Higuerote</option><option>Curiepe</option><option>Tacarigua</option></select>
+        </div>
+        <div><label>Fecha</label><input type="date" name="fecha"></div>
+        <div><label>Elaborado por</label><input name="responsable"></div>
+        <div><label>Dirección del membrete</label>
+          <select name="direccion">
+            <option value="completo">Completo (Secretaría + ambas direcciones)</option>
+            <option value="habitat">Dirección de Hábitat y Vivienda</option>
+            <option value="ingenieria">Dirección de Ingeniería Municipal</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </fieldset>
+
+  <!-- ===================== CONCRETO ===================== -->
+  <fieldset>
+    <div class="sec-head" onclick="toggle(this)">Concreto <span>▾</span></div>
+    <div class="sec-body">
+      <div class="grid">
+        <div><label>Resistencia (kg/cm²)</label><input name="concreto_resistencia" value="210"></div>
+        <div><label>Cemento (sacos por m³)</label><input name="concreto_cemento" type="number" step="any" value="8"></div>
+        <div><label>Arena (m³ por m³)</label><input name="concreto_arena" type="number" step="any" value="0.55"></div>
+        <div><label>Grava (m³ por m³)</label><input name="concreto_grava" type="number" step="any" value="0.70"></div>
+        <div><label>% Desperdicio</label><input name="concreto_desperdicio" type="number" step="any" value="0"></div>
+      </div>
+      <p class="nota">Si el elemento es circular (columna redonda, pilote) llena "Diámetro" y deja ancho vacío.</p>
+      <table id="tbl-concreto">
+        <thead><tr><th>Elemento</th><th>Largo (m)</th><th>Ancho (m)</th><th>Alto (m)</th><th>Diám. (m)</th><th>Cant.</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <button type="button" class="btn btn-add" onclick="addRow('tbl-concreto',['elemento','largo','ancho','alto','diam','cant'],{elemento:'Columna',cant:1})">+ Agregar elemento</button>
+    </div>
+  </fieldset>
+
+  <!-- ===================== ACERO ===================== -->
+  <fieldset>
+    <div class="sec-head" onclick="toggle(this)">Acero de Refuerzo <span>▾</span></div>
+    <div class="sec-body">
+      <div class="grid">
+        <div><label>% Desperdicio</label><input name="acero_desperdicio" type="number" step="any" value="5"></div>
+      </div>
+      <b>Barras longitudinales</b>
+      <table id="tbl-acero-barras">
+        <thead><tr><th>Diámetro (ej. 3/8, 1/2, 12)</th><th>Long. por barra (m)</th><th>N° barras</th><th>Cant. elementos</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <button type="button" class="btn btn-add" onclick="addRow('tbl-acero-barras',['diam','long','nbarras','cant'],{diam:'1/2',cant:1})">+ Agregar barra</button>
+      <br><br>
+      <b>Estribos (automático)</b>
+      <table id="tbl-acero-estribos">
+        <thead><tr><th>Diámetro</th><th>Lado A (m)</th><th>Lado B (m)</th><th>Largo elemento (m)</th><th>Separación (m)</th><th>Gancho extra (m)</th><th>Cant. elementos</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <button type="button" class="btn btn-add" onclick="addRow('tbl-acero-estribos',['diam','a','b','largo','sep','gancho','cant'],{diam:'1/4',gancho:0.10,cant:1})">+ Agregar estribo</button>
+    </div>
+  </fieldset>
+
+  <!-- ===================== BLOQUES ===================== -->
+  <fieldset>
+    <div class="sec-head" onclick="toggle(this)">Pega de Bloques <span>▾</span></div>
+    <div class="sec-body">
+      <div class="grid">
+        <div><label>Tipo</label><select name="bloques_tipo"><option value="concreto">Concreto</option><option value="arcilla">Arcilla</option></select></div>
+        <div><label>Espesor (cm)</label><select name="bloques_espesor"><option>10</option><option>12</option><option selected>15</option></select></div>
+        <div><label>Bloques por m²</label><input name="bloques_rendimiento" type="number" step="any" value="12.5"></div>
+        <div><label>Cemento (sacos/m²)</label><input name="bloques_cemento" type="number" step="any" value="0"></div>
+        <div><label>Arena (m³/m²)</label><input name="bloques_arena" type="number" step="any" value="0"></div>
+      </div>
+      <b>Paredes</b>
+      <table id="tbl-bloques-paredes">
+        <thead><tr><th>Largo (m)</th><th>Alto (m)</th><th>Cant.</th><th></th></tr></thead><tbody></tbody>
+      </table>
+      <button type="button" class="btn btn-add" onclick="addRow('tbl-bloques-paredes',['largo','alto','cant'],{cant:1})">+ Agregar pared</button>
+      <br><br><b>Vanos a descontar (puertas / ventanas)</b>
+      <table id="tbl-bloques-vanos">
+        <thead><tr><th>Ancho (m)</th><th>Alto (m)</th><th>Cant.</th><th></th></tr></thead><tbody></tbody>
+      </table>
+      <button type="button" class="btn btn-add" onclick="addRow('tbl-bloques-vanos',['ancho','alto','cant'],{cant:1})">+ Agregar vano</button>
+    </div>
+  </fieldset>
+
+  <!-- ===================== FRISO ===================== -->
+  <fieldset>
+    <div class="sec-head" onclick="toggle(this)">Friso <span>▾</span></div>
+    <div class="sec-body">
+      <div class="grid">
+        <div><label>Espesor (cm)</label><input name="friso_espesor" type="number" step="any" value="1.5"></div>
+        <div><label>Caras a frisar</label><select name="friso_caras"><option value="1">1 (una cara)</option><option value="2">2 (ambas caras)</option></select></div>
+        <div><label>Cemento (sacos/m²)</label><input name="friso_cemento" type="number" step="any" value="0"></div>
+        <div><label>Arena (m³/m²)</label><input name="friso_arena" type="number" step="any" value="0"></div>
+      </div>
+      <b>Paredes</b>
+      <table id="tbl-friso-paredes">
+        <thead><tr><th>Largo (m)</th><th>Alto (m)</th><th>Cant.</th><th></th></tr></thead><tbody></tbody>
+      </table>
+      <button type="button" class="btn btn-add" onclick="addRow('tbl-friso-paredes',['largo','alto','cant'],{cant:1})">+ Agregar pared</button>
+      <br><br><b>Vanos a descontar</b>
+      <table id="tbl-friso-vanos">
+        <thead><tr><th>Ancho (m)</th><th>Alto (m)</th><th>Cant.</th><th></th></tr></thead><tbody></tbody>
+      </table>
+      <button type="button" class="btn btn-add" onclick="addRow('tbl-friso-vanos',['ancho','alto','cant'],{cant:1})">+ Agregar vano</button>
+    </div>
+  </fieldset>
+
+  <!-- ===================== PISO ===================== -->
+  <fieldset>
+    <div class="sec-head" onclick="toggle(this)">Piso / Cerámica <span>▾</span></div>
+    <div class="sec-body">
+      <div class="grid">
+        <div><label>Pieza - largo (m)</label><input name="piso_pieza_a" type="number" step="any" placeholder="ej. 0.60"></div>
+        <div><label>Pieza - ancho (m)</label><input name="piso_pieza_b" type="number" step="any" placeholder="ej. 0.60"></div>
+        <div><label>% Desperdicio</label><input name="piso_desperdicio" type="number" step="any" value="10"></div>
+        <div><label>Cemento (sacos/m²)</label><input name="piso_cemento" type="number" step="any" value="0"></div>
+        <div><label>Arena (m³/m²)</label><input name="piso_arena" type="number" step="any" value="0"></div>
+      </div>
+      <table id="tbl-piso">
+        <thead><tr><th>Largo (m)</th><th>Ancho (m)</th><th>Cant.</th><th></th></tr></thead><tbody></tbody>
+      </table>
+      <button type="button" class="btn btn-add" onclick="addRow('tbl-piso',['largo','ancho','cant'],{cant:1})">+ Agregar ambiente</button>
+    </div>
+  </fieldset>
+
+  <!-- ===================== PINTURA ===================== -->
+  <fieldset>
+    <div class="sec-head" onclick="toggle(this)">Pintura <span>▾</span></div>
+    <div class="sec-body">
+      <div class="grid">
+        <div><label>Área a pintar (m²)</label><input name="pintura_area" type="number" step="any"></div>
+        <div><label>N° de manos</label><input name="pintura_manos" type="number" value="2"></div>
+        <div><label>Rendimiento (m²/galón)</label><input name="pintura_rendimiento" type="number" step="any" value="35"></div>
+      </div>
+    </div>
+  </fieldset>
+
+  <!-- ===================== TECHO ===================== -->
+  <fieldset>
+    <div class="sec-head" onclick="toggle(this)">Techo (Láminas y Correas) <span>▾</span></div>
+    <div class="sec-body">
+      <div class="grid">
+        <div><label>Largo horizontal del faldón (m)</label><input name="techo_largo" type="number" step="any"></div>
+        <div><label>Ancho del techo (m)</label><input name="techo_ancho" type="number" step="any"></div>
+        <div><label>Pendiente (%)</label><input name="techo_pendiente" type="number" step="any" value="15"></div>
+        <div><label>Largo de lámina (m)</label><input name="techo_lam_largo" type="number" step="any" value="3.66"></div>
+        <div><label>Ancho útil de lámina (m)</label><input name="techo_lam_ancho" type="number" step="any" value="0.86"></div>
+        <div><label>Solape (m)</label><input name="techo_solape" type="number" step="any" value="0.15"></div>
+        <div><label>Separación correas (m)</label><input name="techo_sep_correas" type="number" step="any" value="1.0"></div>
+        <div><label>Tornillos por lámina</label><input name="techo_tornillos" type="number" value="8"></div>
+      </div>
+    </div>
+  </fieldset>
+
+  <!-- ===================== PRELIMINARES ===================== -->
+  <fieldset>
+    <div class="sec-head" onclick="toggle(this)">Preliminares (Limpieza / Excavación / Relleno) <span>▾</span></div>
+    <div class="sec-body">
+      <b>Limpieza y replanteo</b>
+      <table id="tbl-limpieza">
+        <thead><tr><th>Largo (m)</th><th>Ancho (m)</th><th>Cant.</th><th></th></tr></thead><tbody></tbody>
+      </table>
+      <button type="button" class="btn btn-add" onclick="addRow('tbl-limpieza',['largo','ancho','cant'],{cant:1})">+ Agregar área</button>
+      <br><br><b>Excavación</b>
+      <div class="grid" style="max-width:220px"><div><label>% Esponjamiento (relleno)</label><input name="relleno_esponj" type="number" step="any" value="0"></div></div>
+      <table id="tbl-excavacion">
+        <thead><tr><th>Largo (m)</th><th>Ancho (m)</th><th>Profundidad (m)</th><th>Cant.</th><th></th></tr></thead><tbody></tbody>
+      </table>
+      <button type="button" class="btn btn-add" onclick="addRow('tbl-excavacion',['largo','ancho','prof','cant'],{cant:1})">+ Agregar zanja/fosa</button>
+    </div>
+  </fieldset>
+
+  <button type="submit" class="btn btn-final">Generar Word con membrete</button>
+</form>
+
+<script>
+function toggle(h){
+  const b = h.nextElementSibling; b.classList.toggle('open');
+  h.querySelector('span').textContent = b.classList.contains('open') ? '▾' : '▸';
+}
+function addRow(tblId, campos, defaults){
+  defaults = defaults || {};
+  const tbody = document.getElementById(tblId).querySelector('tbody');
+  const tr = document.createElement('tr');
+  campos.forEach(c=>{
+    const td = document.createElement('td');
+    const inp = document.createElement('input');
+    inp.dataset.campo = c;
+    inp.value = defaults[c] !== undefined ? defaults[c] : '';
+    inp.type = (c === 'elemento' || c === 'diam') ? 'text' : 'number';
+    inp.step = 'any';
+    td.appendChild(inp); tr.appendChild(td);
+  });
+  const tdBtn = document.createElement('td');
+  const btn = document.createElement('button');
+  btn.type='button'; btn.className='btn btn-del'; btn.textContent='✕';
+  btn.onclick = ()=> tr.remove();
+  tdBtn.appendChild(btn); tr.appendChild(tdBtn);
+  tbody.appendChild(tr);
+}
+function serializar(tblId){
+  const rows = [...document.getElementById(tblId).querySelectorAll('tbody tr')];
+  return rows.map(tr=>{
+    const o = {};
+    [...tr.querySelectorAll('input')].forEach(inp=>{ if(inp.value!=='') o[inp.dataset.campo]=inp.value; });
+    return o;
+  }).filter(o=>Object.keys(o).length);
+}
+const TABLAS = {
+  concreto_elementos:'tbl-concreto', acero_barras:'tbl-acero-barras', acero_estribos:'tbl-acero-estribos',
+  bloques_paredes:'tbl-bloques-paredes', bloques_vanos:'tbl-bloques-vanos',
+  friso_paredes:'tbl-friso-paredes', friso_vanos:'tbl-friso-vanos',
+  piso_filas:'tbl-piso', limpieza_filas:'tbl-limpieza', excavacion_filas:'tbl-excavacion'
+};
+document.getElementById('frm').addEventListener('submit', function(){
+  for(const [campo, tbl] of Object.entries(TABLAS)){
+    let h = this.querySelector(`input[name=${campo}]`);
+    if(!h){ h = document.createElement('input'); h.type='hidden'; h.name=campo; this.appendChild(h); }
+    h.value = JSON.stringify(serializar(tbl));
+  }
+});
+// Filas iniciales de ejemplo (vacías) para que no arranque en cero
+addRow('tbl-concreto',['elemento','largo','ancho','alto','diam','cant'],{elemento:'Columna',cant:1});
+</script>
+</body>
+</html>
